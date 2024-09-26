@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product of Open Source</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #f8d7da, #d1ecf1);
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 10px;
+            width: calc(50% - 20px); /* 一行2个产品框 */
+            text-align: center;
+        }
+
+        .image-container {
+            position: relative;
+        }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .edit-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: white;
+            border-radius: 50%;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .upload-label {
+            display: block;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: linear-gradient(135deg, #ff7f50, #ff6347); /* 橙红色渐变背景 */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #ff6347, #ff4500);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-product-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 600px) {
+            .product-card {
+                width: calc(100% - 20px); /* 手机端一行1个产品框 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Product of Open Source</h1>
+    <div class="container" id="productContainer"></div>
+
+    <button class="add-product-btn" id="addProductBtn">+</button>
+    <button class="save-btn" id="saveBtn">Save</button>
+
+    <script>
+        const container = document.getElementById('productContainer');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const saveBtn = document.getElementById('saveBtn');
+
+        // 页面加载时，从 localStorage 加载产品
+        window.onload = function() {
+            const savedProducts = JSON.parse(localStorage.getItem('products')) || [];
+            if (savedProducts.length > 0) {
+                savedProducts.forEach(product => {
+                    addProductCard(product);
+                });
+            }
+        };
+
+        // 添加产品按钮点击事件
+        addProductBtn.addEventListener('click', () => {
+            const newProduct = {
+                name: 'New Product',
+                videoLink: '',
+                tapLink: '',
+                imageSrc: 'product_placeholder.jpg'
+            };
+            addProductCard(newProduct);
+        });
+
+        // 保存按钮点击事件
+        saveBtn.addEventListener('click', saveProducts);
+
+        // 添加产品卡片到页面
+        function addProductCard(product) {
+            const newProductCard = document.createElement('div');
+            newProductCard.className = 'product-card';
+            newProductCard.innerHTML = `
+                <div class="image-container">
+                    <img src="${product.imageSrc}" alt="New Product">
+                </div>
+                <h2>${product.name}</h2>
+                <label class="upload-label">Upload Product Picture
+                    <input type="file" accept="image/*" onchange="uploadImage(this)">
+                </label>
+                <input type="text" class="video-link" placeholder="Video Link" value="${product.videoLink}">
+                <button onclick="copyLink(this)">Copy Video Link</button>
+                <button onclick="openLink(this)">Open Video Link</button>
+                <input type="text" class="tap-link" placeholder="TAP Link" value="${product.tapLink}">
+                <button onclick="copyLink(this)">Copy TAP Link</button>
+                <button onclick="openLink(this)">Open TAP Link</button>
+                <button onclick="deleteProduct(this)">Delete Product</button>
+            `;
+            container.appendChild(newProductCard);
+        }
+
+        // 保存产品到 localStorage
+        function saveProducts() {
+            const products = [];
+            document.querySelectorAll('.product-card').forEach(card => {
+                const product = {
+                    name: card.querySelector('h2').textContent,
+                    videoLink: card.querySelector('.video-link').value,
+                    tapLink: card.querySelector('.tap-link').value,
+                    imageSrc: card.querySelector('img').src
+                };
+                products.push(product);
+            });
+            localStorage.setItem('products', JSON.stringify(products));
+            alert('Products saved!');
+        }
+
+        // 删除产品
+        function deleteProduct(button) {
+            const card = button.closest('.product-card');
+            const password = prompt("Enter password to delete this product:");
+            if (password === "yourpassword") { // 替换为实际密码
+                card.remove();
+                saveProducts();
+                alert("Product deleted!");
+            } else {
+                alert("Incorrect password.");
+            }
+        }
+
+        // 复制链接
+        function copyLink(button) {
+            const link = button.previousElementSibling.value;
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Link copied!');
+            });
+        }
+
+        // 打开链接
+        function openLink(button) {
+            const link = button.previousElementSibling.value;
+            if (link) {
+                window.open(link, '_blank');
+            } else {
+                alert("Please enter a valid link.");
+            }
+        }
+
+        // 上传图片
+        function uploadImage(input) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                input.closest('.product-card').querySelector('img').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
